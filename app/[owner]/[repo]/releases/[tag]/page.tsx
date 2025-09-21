@@ -13,11 +13,11 @@ import { applyAccentStyle } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 type PageProps = {
-  params: {
+  params: Promise<{
     owner: string;
     repo: string;
     tag: string;
-  };
+  }>;
 };
 
 async function loadData(owner: string, repo: string, tag: string) {
@@ -38,9 +38,10 @@ async function loadData(owner: string, repo: string, tag: string) {
 }
 
 export default async function ReleasePage({ params }: PageProps) {
-  const owner = decodeURIComponent(params.owner);
-  const repo = decodeURIComponent(params.repo);
-  const tag = decodeURIComponent(params.tag);
+  const resolvedParams = await params;
+  const owner = decodeURIComponent(resolvedParams.owner);
+  const repo = decodeURIComponent(resolvedParams.repo);
+  const tag = decodeURIComponent(resolvedParams.tag);
   const { release, siteConfig, error } = await loadData(owner, repo, tag);
 
   const accentStyle = applyAccentStyle(siteConfig?.accent);

@@ -122,7 +122,7 @@ export function applyAccentStyle(accent?: string): CSSProperties | undefined {
 
   return {
     "--wn-accent": accent,
-  } satisfies CSSProperties;
+  } as CSSProperties;
 }
 
 export function getDefaultRepoTitle(owner: string, repo: string, fallback?: string) {
