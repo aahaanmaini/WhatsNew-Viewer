@@ -39,7 +39,7 @@ export function SectionList({ sections }: SectionListProps) {
         return (
           <li
             key={`change-${idx}`}
-            className="flex flex-wrap items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-white/90"
+            className="flex flex-wrap items-center gap-2.5 rounded-xl px-3 py-2 text-white/90"
           >
             <div
               className={cn(
@@ -50,12 +50,12 @@ export function SectionList({ sections }: SectionListProps) {
             >
               <Icon className={cn("size-[13px]", meta?.iconClassName)} strokeWidth={2.1} />
             </div>
-            <p className="flex-1 text-sm font-medium leading-6 text-white/80">
+            <p className="flex-1 text-[1.02rem] font-medium leading-7 text-white/85">
               {item.summary}
             </p>
             <BadgeForClass
               changeClass={inferredClass}
-              className="self-center px-2.5 py-[0.25rem] text-[0.68rem]"
+              className="self-center px-3 py-[0.3rem] text-[0.72rem]"
             />
           </li>
         );

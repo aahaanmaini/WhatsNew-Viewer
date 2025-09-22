@@ -95,3 +95,60 @@ export async function fetchSiteConfig(
 ): Promise<SiteCfg | null> {
   return fetchJson<SiteCfg>(ghRaw(owner, repo, "data/site.config.json"));
 }
+
+type ReleaseIndex = string[] | { tags?: string[] } | null;
+
+function normalizeReleaseIndex(data: ReleaseIndex): string[] {
+  if (!data) return [];
+  if (Array.isArray(data)) {
+    return data.filter((entry): entry is string => typeof entry === "string");
+  }
+  if (Array.isArray(data.tags)) {
+    return data.tags.filter((entry): entry is string => typeof entry === "string");
+  }
+  return [];
+}
+
+export async function fetchReleaseTags(
+  owner: string,
+  repo: string,
+): Promise<string[]> {
+  const indexUrls = [
+    ghRaw(owner, repo, "data/releases/index.json"),
+    ghRaw(owner, repo, "data/releases.json"),
+  ];
+
+  for (const url of indexUrls) {
+    const index = await fetchJson<ReleaseIndex>(url).catch(() => null);
+    const tags = normalizeReleaseIndex(index);
+    if (tags.length) {
+      return tags;
+    }
+  }
+
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/data/releases?ref=gh-pages`;
+  try {
+    const response = await fetch(apiUrl, {
+      headers: {
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "whatsnew-site",
+      },
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = (await response.json()) as Array<{ name: string }>; // rough GitHub schema
+
+    return payload
+      .map((entry) => entry.name)
+      .filter((name) => name.endsWith(".json"))
+      .map((name) => name.replace(/\.json$/i, ""));
+  } catch (error) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("Failed to fetch release list", error);
+    }
+    return [];
+  }
+}

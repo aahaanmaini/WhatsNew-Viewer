@@ -21,7 +21,7 @@ export function ReleaseCard({ changelog, isLatest }: ReleaseCardProps) {
   const changeCount = useMemo(() => countVisibleItems(changelog.sections), [
     changelog.sections,
   ]);
-  const defaultOpen = isLatest ? true : changeCount <= 4;
+  const defaultOpen = Boolean(isLatest);
   const [open, setOpen] = useState(defaultOpen);
 
   const changeCountLabel = `${changeCount} ${changeCount === 1 ? "change" : "changes"}`;
