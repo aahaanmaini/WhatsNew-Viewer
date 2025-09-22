@@ -112,9 +112,14 @@ export function formatDate(date?: string) {
   }).format(value);
 }
 
-export function countVisibleItems(sections: Section[]) {
+export function countVisibleItems(sections: Section[] | null | undefined) {
+  if (!Array.isArray(sections) || sections.length === 0) {
+    return 0;
+  }
+
   return sections.reduce((total, section) => {
-    const visible = section.items.filter((item) => !getClassMeta(item.class)?.hidden);
+    const items = Array.isArray(section.items) ? section.items : [];
+    const visible = items.filter((item) => !getClassMeta(item.class)?.hidden);
     return total + visible.length;
   }, 0);
 }

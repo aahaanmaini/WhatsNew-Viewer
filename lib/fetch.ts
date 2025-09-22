@@ -1,4 +1,8 @@
-import type { Changelog, SiteCfg } from "@/lib/types";
+import type {
+  Changelog,
+  ReleaseIndexEntry,
+  SiteCfg,
+} from "@/lib/types";
 
 const GITHUB_RAW_BASE = "https://raw.githubusercontent.com";
 
@@ -83,10 +87,13 @@ export async function fetchReleaseChangelog(
   owner: string,
   repo: string,
   tag: string,
+  path?: string,
 ): Promise<Changelog | null> {
-  return fetchJson<Changelog>(
-    ghRaw(owner, repo, "data", "releases", `${tag}.json`),
-  );
+  const target = path
+    ? ghRaw(owner, repo, path)
+    : ghRaw(owner, repo, "data", "releases", `${tag}.json`);
+
+  return fetchJson<Changelog>(target);
 }
 
 export async function fetchSiteConfig(
@@ -96,36 +103,92 @@ export async function fetchSiteConfig(
   return fetchJson<SiteCfg>(ghRaw(owner, repo, "data/site.config.json"));
 }
 
-type ReleaseIndex = string[] | { tags?: string[] } | null;
+type ReleaseIndexRaw = Array<Record<string, unknown>> | Record<string, unknown> | null;
 
-function normalizeReleaseIndex(data: ReleaseIndex): string[] {
-  if (!data) return [];
-  if (Array.isArray(data)) {
-    return data.filter((entry): entry is string => typeof entry === "string");
+function normalizeReleaseIndexEntry(entry: Record<string, unknown>): ReleaseIndexEntry | null {
+  const tag = typeof entry.tag === "string" ? entry.tag : undefined;
+  if (!tag) {
+    return null;
   }
-  if (Array.isArray(data.tags)) {
-    return data.tags.filter((entry): entry is string => typeof entry === "string");
-  }
-  return [];
+
+  const label = typeof entry.label === "string" && entry.label.trim().length > 0 ? entry.label : undefined;
+  const releasedAt = typeof entry.released_at === "string" ? entry.released_at : undefined;
+  const path = typeof entry.path === "string" && entry.path.trim().length > 0 ? entry.path : undefined;
+  const range = typeof entry.range === "object" && entry.range ? (entry.range as ReleaseIndexEntry["range"]) : undefined;
+  const stats = typeof entry.stats === "object" && entry.stats ? (entry.stats as ReleaseIndexEntry["stats"]) : undefined;
+
+  return {
+    tag,
+    label,
+    released_at: releasedAt,
+    path,
+    range,
+    stats,
+  };
 }
 
-export async function fetchReleaseTags(
+function sortReleaseEntries(entries: ReleaseIndexEntry[]) {
+  return entries
+    .map((entry, index) => ({ entry, index }))
+    .sort((a, b) => {
+      const timeA = a.entry.released_at ? new Date(a.entry.released_at).getTime() : Number.NaN;
+      const timeB = b.entry.released_at ? new Date(b.entry.released_at).getTime() : Number.NaN;
+
+      if (!Number.isNaN(timeA) && !Number.isNaN(timeB)) {
+        return timeB - timeA;
+      }
+
+      if (!Number.isNaN(timeA)) return -1;
+      if (!Number.isNaN(timeB)) return 1;
+
+      return a.index - b.index;
+    })
+    .map((item) => item.entry);
+}
+
+export async function fetchReleaseIndex(
   owner: string,
   repo: string,
-): Promise<string[]> {
+): Promise<ReleaseIndexEntry[]> {
   const indexUrls = [
     ghRaw(owner, repo, "data/releases/index.json"),
     ghRaw(owner, repo, "data/releases.json"),
   ];
 
   for (const url of indexUrls) {
-    const index = await fetchJson<ReleaseIndex>(url).catch(() => null);
-    const tags = normalizeReleaseIndex(index);
-    if (tags.length) {
-      return tags;
+    const raw = await fetchJson<ReleaseIndexRaw>(url).catch(() => null);
+    if (!raw) continue;
+
+    const items = Array.isArray(raw)
+      ? raw
+      : Array.isArray((raw as { releases?: Array<Record<string, unknown>> }).releases)
+        ? ((raw as { releases?: Array<Record<string, unknown>> }).releases as Array<Record<string, unknown>>)
+        : null;
+
+    if (!items) continue;
+
+    const entries = items
+      .map((item) => normalizeReleaseIndexEntry(item))
+      .filter((entry): entry is ReleaseIndexEntry => Boolean(entry));
+
+    if (entries.length) {
+      return sortReleaseEntries(entries);
     }
   }
 
+  const fallbackTags = await fetchReleaseTagsFromDirectory(owner, repo);
+  if (!fallbackTags.length) {
+    return [];
+  }
+
+  return fallbackTags.map((tag) => ({
+    tag,
+    label: tag,
+    path: `data/releases/${tag}.json`,
+  }));
+}
+
+async function fetchReleaseTagsFromDirectory(owner: string, repo: string) {
   const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/data/releases?ref=gh-pages`;
   try {
     const response = await fetch(apiUrl, {

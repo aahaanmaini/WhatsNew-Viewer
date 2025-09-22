@@ -10,12 +10,11 @@ import { SectionList } from "@/components/SectionList";
 
 type ReleaseCardProps = {
   changelog: Changelog;
+  label?: string;
   isLatest?: boolean;
 };
 
-export function ReleaseCard({ changelog, isLatest }: ReleaseCardProps) {
-  const tag = changelog.tag ?? "latest";
-  const displayTag = tag.toLowerCase() === "latest" ? "latest" : tag;
+export function ReleaseCard({ changelog, label, isLatest }: ReleaseCardProps) {
   const anchor = anchorForTag(changelog.tag);
   const readableDate = formatDate(changelog.released_at);
   const changeCount = useMemo(() => countVisibleItems(changelog.sections), [
@@ -25,6 +24,8 @@ export function ReleaseCard({ changelog, isLatest }: ReleaseCardProps) {
   const [open, setOpen] = useState(defaultOpen);
 
   const changeCountLabel = `${changeCount} ${changeCount === 1 ? "change" : "changes"}`;
+  const displayTitle =
+    label ?? changelog.label ?? changelog.tag ?? changelog.repo ?? (isLatest ? "Latest" : "Release");
 
   return (
     <div
@@ -45,7 +46,7 @@ export function ReleaseCard({ changelog, isLatest }: ReleaseCardProps) {
             className="text-xl font-medium text-white"
           >
             <a href={`#${anchor}`} className="transition-colors hover:text-white/70">
-              {displayTag}
+              {displayTitle}
             </a>
           </h2>
           {isLatest ? (

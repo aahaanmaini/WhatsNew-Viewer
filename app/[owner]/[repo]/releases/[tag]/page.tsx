@@ -64,7 +64,7 @@ export default async function ReleasePage({ params }: PageProps) {
           actionLabel="Back to latest"
         />
       ) : release ? (
-        <ReleaseCard changelog={release} />
+        <ReleaseCard changelog={release} label={release.label ?? release.tag ?? tag} />
       ) : (
         <ErrorNotice
           title="Release not found."

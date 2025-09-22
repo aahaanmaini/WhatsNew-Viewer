@@ -32,10 +32,20 @@ export type Stats = {
 export type Changelog = {
   repo: string;
   tag?: string;
+  label?: string;
   released_at?: string;
   range: Range;
   stats?: Stats;
   sections: Section[];
+};
+
+export type ReleaseIndexEntry = {
+  tag: string;
+  label?: string;
+  released_at?: string;
+  range?: Range;
+  stats?: Stats;
+  path?: string;
 };
 
 export type SiteCfg = {
