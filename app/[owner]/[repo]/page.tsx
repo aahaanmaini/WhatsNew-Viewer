@@ -42,22 +42,20 @@ async function loadData(owner: string, repo: string) {
       ? releaseEntries.filter((entry) => entry.tag !== latestEntry.tag)
       : releaseEntries;
 
-    const releasesRaw = await Promise.all(
-      remainingEntries.map(async (entry) => {
-        const release = await fetchReleaseChangelog(owner, repo, entry.tag, entry.path);
-        if (!release) return null;
+    const releases: ReleaseWithMeta[] = [];
 
-        return {
-          changelog: release,
-          label: entry.label ?? entry.tag,
-          entry,
-        } satisfies ReleaseWithMeta;
-      }),
-    );
+    for (const entry of remainingEntries) {
+      const release = await fetchReleaseChangelog(owner, repo, entry.tag, entry.path);
+      if (!release) {
+        continue;
+      }
 
-    const releases = releasesRaw.filter(
-      (item): item is ReleaseWithMeta => Boolean(item?.changelog),
-    );
+      releases.push({
+        changelog: release,
+        label: entry.label,
+        entry,
+      });
+    }
 
     const latestLabel =
       latest?.label ?? latestEntry?.label ?? latestEntry?.tag ?? latest?.tag ?? "Latest";

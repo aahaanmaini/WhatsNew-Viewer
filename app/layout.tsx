@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "WhatsNew Changelog Viewer",
+  title: "What's New?",
   description:
     "Public, read-only viewer for changelog JSON files published via whatsnew.",
 };
