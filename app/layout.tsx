@@ -15,8 +15,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="antialiased bg-background text-foreground">
-        <div className="min-h-screen bg-gradient-to-b from-background via-background to-background/80">
-          {children}
+        <div className="min-h-screen bg-background">
+          <div className="mx-auto w-full max-w-4xl px-6 py-14 sm:px-10">
+            {children}
+          </div>
         </div>
       </body>
     </html>

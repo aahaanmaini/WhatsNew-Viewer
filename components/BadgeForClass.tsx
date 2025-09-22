@@ -16,8 +16,12 @@ export function BadgeForClass({ changeClass, className }: BadgeForClassProps) {
 
   return (
     <Badge
-      variant={meta.variant ?? "outline"}
-      className={cn("uppercase tracking-wide", meta.className, className)}
+      variant={meta.badgeVariant ?? "secondary"}
+      className={cn(
+        "rounded-full px-2.5 py-[0.3rem] text-[0.7rem] font-medium",
+        meta.badgeClassName,
+        className,
+      )}
     >
       {meta.label}
     </Badge>

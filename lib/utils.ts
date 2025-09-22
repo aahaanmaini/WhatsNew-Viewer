@@ -19,42 +19,67 @@ export function cn(...inputs: ClassValue[]) {
 
 export type ChangeClassMeta = {
   label: string;
-  variant?: "default" | "outline" | "secondary" | "destructive";
-  className?: string;
   icon?: LucideIcon;
   hidden?: boolean;
+  badgeVariant?: "default" | "outline" | "secondary" | "destructive";
+  badgeClassName?: string;
+  iconWrapperClassName?: string;
+  iconClassName?: string;
 };
 
 const CHANGE_CLASS_META: Record<ChangeClass, ChangeClassMeta> = {
   feature: {
     label: "Feature",
-    className: "border-emerald-500/50 bg-emerald-500/10 text-emerald-300",
+    badgeVariant: "outline",
+    badgeClassName:
+      "border border-[#1f4f31] bg-[#14261c] text-[#4ade80]",
+    iconWrapperClassName: "bg-[#173421] text-[#4ade80]",
+    iconClassName: "text-[#4ade80]",
     icon: PlusCircle,
   },
   fix: {
     label: "Fix",
-    className: "border-sky-500/50 bg-sky-500/10 text-sky-300",
+    badgeVariant: "outline",
+    badgeClassName:
+      "border border-[#154157] bg-[#10222f] text-[#38bdf8]",
+    iconWrapperClassName: "bg-[#102d3d] text-[#38bdf8]",
+    iconClassName: "text-[#38bdf8]",
     icon: Wrench,
   },
   perf: {
     label: "Improvement",
-    className: "border-amber-500/50 bg-amber-500/10 text-amber-300",
+    badgeVariant: "outline",
+    badgeClassName:
+      "border border-[#4d3a0f] bg-[#2c210c] text-[#facc15]",
+    iconWrapperClassName: "bg-[#35260c] text-[#facc15]",
+    iconClassName: "text-[#facc15]",
     icon: Sparkles,
   },
   docs: {
     label: "Docs",
-    className: "border-slate-600/60 bg-slate-600/10 text-slate-300",
+    badgeVariant: "outline",
+    badgeClassName:
+      "border border-[#2c3444] bg-[#1b202c] text-[#cbd5f5]",
+    iconWrapperClassName: "bg-[#1e2532] text-[#cbd5f5]",
+    iconClassName: "text-[#cbd5f5]",
     icon: BookOpen,
   },
   security: {
     label: "Security",
-    className: "border-rose-500/60 bg-rose-500/10 text-rose-300",
+    badgeVariant: "outline",
+    badgeClassName:
+      "border border-[#3f1420] bg-[#281018] text-[#fda4af]",
+    iconWrapperClassName: "bg-[#2e121b] text-[#fda4af]",
+    iconClassName: "text-[#fda4af]",
     icon: ShieldCheck,
   },
   breaking: {
     label: "Breaking",
-    variant: "outline",
-    className: "border-rose-500 text-rose-300",
+    badgeVariant: "outline",
+    badgeClassName: "text-rose-300 border border-rose-500",
+    iconWrapperClassName:
+      "border border-rose-500 bg-rose-500/20 text-rose-200",
+    iconClassName: "text-rose-200",
     icon: AlertTriangle,
   },
   internal: {
@@ -94,15 +119,6 @@ export function countVisibleItems(sections: Section[]) {
   }, 0);
 }
 
-export function visibleSections(sections: Section[]) {
-  return sections
-    .map((section) => ({
-      ...section,
-      items: section.items.filter((item) => !getClassMeta(item.class)?.hidden),
-    }))
-    .filter((section) => section.items.length > 0);
-}
-
 export function anchorForTag(tag?: string) {
   if (!tag) {
     return "latest";
@@ -136,4 +152,29 @@ export function getDefaultRepoTitle(owner: string, repo: string, fallback?: stri
 export function changeIcon(changeClass?: ChangeClass | null): LucideIcon {
   const meta = getClassMeta(changeClass);
   return meta?.icon ?? Circle;
+}
+
+const SECTION_CLASS_ALIASES: Array<{ match: RegExp; value: ChangeClass }> = [
+  { match: /feature/i, value: "feature" },
+  { match: /(bug|fix)/i, value: "fix" },
+  { match: /(perf|improve|speed|optimi[sz]e)/i, value: "perf" },
+  { match: /doc/i, value: "docs" },
+  { match: /security/i, value: "security" },
+  { match: /break/i, value: "breaking" },
+  { match: /internal/i, value: "internal" },
+];
+
+export function inferChangeClass(
+  title?: string,
+  fallback?: ChangeClass | null,
+): ChangeClass | undefined {
+  if (fallback) {
+    return fallback;
+  }
+  if (!title) {
+    return undefined;
+  }
+
+  const alias = SECTION_CLASS_ALIASES.find((entry) => entry.match.test(title));
+  return alias?.value;
 }

@@ -44,7 +44,7 @@ export default async function RepoLatestPage({ params }: PageProps) {
 
   return (
     <main
-      className="mx-auto flex w-full max-w-4xl flex-col gap-10 px-6 py-12"
+      className="mx-auto flex w-full max-w-4xl flex-col gap-10"
       style={accentStyle}
     >
       <Header owner={owner} repo={repo} siteConfig={siteConfig} />

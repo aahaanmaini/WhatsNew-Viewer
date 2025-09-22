@@ -1,22 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarDays, ListChecks } from "lucide-react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import type { Changelog } from "@/lib/types";
 import { anchorForTag, countVisibleItems, formatDate } from "@/lib/utils";
 import { SectionList } from "@/components/SectionList";
@@ -28,77 +15,71 @@ type ReleaseCardProps = {
 
 export function ReleaseCard({ changelog, isLatest }: ReleaseCardProps) {
   const tag = changelog.tag ?? "latest";
+  const displayTag = tag.toLowerCase() === "latest" ? "latest" : tag;
   const anchor = anchorForTag(changelog.tag);
   const readableDate = formatDate(changelog.released_at);
   const changeCount = useMemo(() => countVisibleItems(changelog.sections), [
     changelog.sections,
   ]);
-  const defaultOpen = changeCount <= 4;
+  const defaultOpen = isLatest ? true : changeCount <= 4;
   const [open, setOpen] = useState(defaultOpen);
 
+  const changeCountLabel = `${changeCount} ${changeCount === 1 ? "change" : "changes"}`;
+
   return (
-    <Card
+    <div
       id={anchor}
-      className="border-border/60 bg-card/30 backdrop-blur-sm"
       aria-labelledby={`release-${anchor}-title`}
+      className="space-y-5 rounded-2xl border border-[#161b24] bg-[#0a0d13] px-5 py-5 shadow-[0_1px_0_rgba(255,255,255,0.04)]"
     >
-      <CardHeader className="gap-4 pb-0">
-        <div className="flex flex-wrap items-center gap-3">
-          <CardTitle
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-controls={`release-${anchor}-content`}
+        aria-expanded={open}
+        className="flex w-full flex-wrap items-center gap-3 rounded-2xl bg-transparent p-0 text-left outline-none transition-none hover:bg-transparent focus-visible:outline-none"
+      >
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
+          <h2
             id={`release-${anchor}-title`}
-            className="text-2xl font-semibold tracking-tight text-foreground"
+            className="text-xl font-medium text-white"
           >
-            <a
-              href={`#${anchor}`}
-              className="hover:text-[color:var(--wn-accent)] hover:underline"
-            >
-              {tag}
+            <a href={`#${anchor}`} className="transition-colors hover:text-white/70">
+              {displayTag}
             </a>
-          </CardTitle>
+          </h2>
           {isLatest ? (
-            <Badge className="border-[color:var(--wn-accent)] bg-[color:var(--wn-accent)]/10 text-[color:var(--wn-accent)]">
+            <Badge className="rounded-full border border-white/20 bg-white/95 px-3 py-1 text-xs font-medium text-black">
               Latest
             </Badge>
           ) : null}
+          {readableDate ? (
+            <span className="flex items-center gap-2 text-sm font-medium text-white/60">
+              <CalendarDays className="size-4" aria-hidden="true" />
+              <span>{readableDate}</span>
+            </span>
+          ) : null}
         </div>
-        {readableDate ? (
-          <CardDescription className="flex items-center gap-2 text-sm text-muted-foreground">
-            <CalendarDays className="size-4" aria-hidden="true" />
-            {readableDate}
-          </CardDescription>
-        ) : null}
-      </CardHeader>
-      <CardContent className="px-6 pt-4">
-        <Accordion
-          type="single"
-          collapsible
-          value={open ? "details" : undefined}
-          onValueChange={(value) => setOpen(value === "details")}
-        >
-          <AccordionItem
-            value="details"
-            className="rounded-lg border border-border/40 bg-background/20 px-4"
-          >
-            <AccordionTrigger className="gap-3 py-4 text-sm font-medium text-muted-foreground hover:no-underline">
-              <span className="flex items-center gap-2 text-muted-foreground">
-                <ListChecks className="size-4" aria-hidden="true" />
-                {changeCount} {changeCount === 1 ? "change" : "changes"}
-              </span>
-            </AccordionTrigger>
-            <AccordionContent className="px-0 pb-6">
-              {changeCount > 0 ? (
-                <div className="pt-4">
-                  <SectionList sections={changelog.sections} />
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No public changes were recorded for this release.
-                </p>
-              )}
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </CardContent>
-    </Card>
+        <div className="flex items-center gap-2 text-sm font-medium text-white/60">
+          {changeCountLabel}
+          <ChevronDown
+            className={`size-4 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            aria-hidden
+          />
+        </div>
+      </button>
+      {open ? (
+        <div id={`release-${anchor}-content`} className="space-y-3.5">
+          <div className="h-px w-full bg-white/12" aria-hidden />
+          {changeCount > 0 ? (
+            <SectionList sections={changelog.sections} />
+          ) : (
+            <p className="text-sm text-white/60">
+              No public changes were recorded for this release.
+            </p>
+          )}
+        </div>
+      ) : null}
+    </div>
   );
 }

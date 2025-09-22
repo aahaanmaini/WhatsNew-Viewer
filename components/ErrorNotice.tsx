@@ -21,19 +21,17 @@ export function ErrorNotice({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border/60 bg-card/20 p-6 text-sm text-muted-foreground",
+        "rounded-2xl border border-white/10 bg-[#10141b] p-6 text-sm text-white/70",
         className,
       )}
     >
-      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-      {description ? (
-        <p className="mt-2 text-muted-foreground">{description}</p>
-      ) : null}
+      <h2 className="text-lg font-semibold text-white">{title}</h2>
+      {description ? <p className="mt-2 text-white/60">{description}</p> : null}
       {actionHref && actionLabel ? (
         <Button
           asChild
           variant="outline"
-          className="mt-4 border-[color:var(--wn-accent)] text-[color:var(--wn-accent)] hover:bg-[color:var(--wn-accent)] hover:text-background"
+          className="mt-4 border-white/20 text-white hover:bg-white hover:text-black"
         >
           <Link href={actionHref}>{actionLabel}</Link>
         </Button>

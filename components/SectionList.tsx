@@ -1,69 +1,65 @@
 import type { Section } from "@/lib/types";
 import { BadgeForClass } from "@/components/BadgeForClass";
-import { cn, changeIcon, visibleSections } from "@/lib/utils";
+import {
+  cn,
+  changeIcon,
+  getClassMeta,
+  inferChangeClass,
+} from "@/lib/utils";
 
 type SectionListProps = {
   sections: Section[];
 };
 
 export function SectionList({ sections }: SectionListProps) {
-  const items = visibleSections(sections);
+  const flatItems = sections.flatMap((section) =>
+    section.items.map((item, index) => ({
+      sectionTitle: section.title,
+      index,
+      item,
+    })),
+  );
+
+  const items = flatItems.filter((entry) => {
+    const meta = getClassMeta(entry.item.class);
+    return !meta?.hidden;
+  });
 
   if (!items.length) {
     return null;
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      {items.map((section) => (
-        <section key={section.title} aria-label={section.title} className="space-y-4">
-          <header className="flex items-center justify-between gap-4">
-            <h3 className="text-lg font-semibold text-foreground/90">
-              {section.title}
-            </h3>
-            <div className="h-px flex-1 rounded bg-border/60" aria-hidden />
-          </header>
-          <ul className="flex flex-col gap-3">
-            {section.items.map((item, index) => {
-              const Icon = changeIcon(item.class);
+    <ul className="flex flex-col gap-1">
+      {items.map(({ item, sectionTitle }, idx) => {
+        const inferredClass = inferChangeClass(sectionTitle, item.class);
+        const Icon = changeIcon(inferredClass);
+        const meta = getClassMeta(inferredClass);
 
-              return (
-                <li
-                  key={`${section.title}-${index}`}
-                  className="group flex items-start gap-3 rounded-lg border border-transparent bg-card/30 p-3 transition-colors hover:border-border/60"
-                >
-                  <div className="mt-1 flex size-7 items-center justify-center rounded-full border border-border/60 bg-muted/20 text-muted-foreground group-hover:border-border">
-                    <Icon className="size-4" strokeWidth={2} />
-                  </div>
-                  <div className="flex flex-1 flex-col gap-2">
-                    <p className="text-sm leading-6 text-foreground/90">
-                      {item.summary}
-                    </p>
-                    {item.refs?.length ? (
-                      <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                        {item.refs.map((ref, refIndex) => (
-                          <span
-                            key={`${section.title}-${index}-ref-${refIndex}`}
-                            className={cn(
-                              "rounded-full border border-border/60 bg-background/40 px-2 py-0.5 font-mono",
-                              "text-[0.68rem] tracking-tight",
-                            )}
-                          >
-                            {ref}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div className="mt-1">
-                    <BadgeForClass changeClass={item.class} />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ))}
-    </div>
+        return (
+          <li
+            key={`change-${idx}`}
+            className="flex flex-wrap items-center gap-2.5 rounded-xl px-2.5 py-1.5 text-white/90"
+          >
+            <div
+              className={cn(
+                "flex size-[22px] items-center justify-center rounded-full bg-white/5 text-white",
+                meta?.iconWrapperClassName,
+              )}
+              aria-hidden
+            >
+              <Icon className={cn("size-[13px]", meta?.iconClassName)} strokeWidth={2.1} />
+            </div>
+            <p className="flex-1 text-sm font-medium leading-6 text-white/80">
+              {item.summary}
+            </p>
+            <BadgeForClass
+              changeClass={inferredClass}
+              className="self-center px-2.5 py-[0.25rem] text-[0.68rem]"
+            />
+          </li>
+        );
+      })}
+    </ul>
   );
 }
